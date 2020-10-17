@@ -8,7 +8,7 @@ from .traincore import train_core
 def run_train_core(args):
     train_core(
         args.rDHSs,
-        args.feature_files,
+        args.feature_files if args.feature_files is not None else [],
         args.sequence_matrix,
         args.signal_z_scores,
         args.output_directory
