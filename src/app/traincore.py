@@ -69,12 +69,10 @@ def train_core(
     history = model.fit(
         [ forward_train, reverse_train ],
         training_outputs,
-        samples_per_epoch = train_samples_per_epoch,
-        nb_epoch = epochLimit,
+        epochs = epochLimit,
         validation_data = ([ forward_valid, reverse_valid ], validation_outputs),
-        nb_val_samples = len(forward_valid),
-        callbacks = [checkpointer, earlystopper],
-        pickle_safe = True
+        validation_steps = len(forward_valid),
+        callbacks = [checkpointer, earlystopper]
     )
 
     print("saving model...", file = sys.stderr)

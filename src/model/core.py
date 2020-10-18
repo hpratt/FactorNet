@@ -17,11 +17,10 @@ def core_model(num_tfs, width, feature_count, filter_count, recurrent_layer_coun
         hidden_layers = [
             Convolution1D(
                 input_dim = 4 + feature_count,
-                nb_filter = filter_count,
-                filter_length = filter_length,
-                border_mode = 'valid',
-                activation = 'relu',
-                subsample_length = 1
+                filters = filter_count,
+                kernel_size = filter_length,
+                padding = 'valid',
+                activation = 'relu'
             ),
             Dropout(0.1),
             TimeDistributed(Dense(filter_count, activation = 'relu')),
@@ -35,15 +34,14 @@ def core_model(num_tfs, width, feature_count, filter_count, recurrent_layer_coun
         hidden_layers = [
             Convolution1D(
                 input_dim = 4 + feature_count,
-                nb_filter = filter_count,
-                filter_length = filter_length,
-                border_mode = 'valid',
-                activation = 'relu',
-                subsample_length = 1
+                filters = filter_count,
+                kernel_size = filter_length,
+                padding = 'valid',
+                activation = 'relu'
             ),
             Dropout(0.1),
             TimeDistributed(Dense(filter_count, activation = 'relu')),
-            MaxPooling1D(pool_length = filter_length / 2, stride = filter_length / 2),
+            MaxPooling1D(pool_size = (int(filter_length / 2),), strides = int(filter_length / 2)),
             Dropout(dropout_rate),
             Flatten(),
             Dense(dense_layer_count, activation = 'relu'),
@@ -54,16 +52,15 @@ def core_model(num_tfs, width, feature_count, filter_count, recurrent_layer_coun
         hidden_layers = [
             Convolution1D(
                 input_dim = 4 + feature_count,
-                nb_filter = filter_count,
-                filter_length = filter_length,
-                border_mode = 'valid',
-                activation = 'relu',
-                subsample_length = 1
+                filters = filter_count,
+                kernel_size = filter_length,
+                padding = 'valid',
+                activation = 'relu'
             ),
             Dropout(0.1),
             TimeDistributed(Dense(filter_count, activation = 'relu')),
-            MaxPooling1D(pool_length = filter_length / 2, stride = filter_length / 2),
-            Bidirectional(LSTM(recurrent_layer_count, dropout_W = 0.1, dropout_U = 0.1, return_sequences = True)),
+            MaxPooling1D(pool_size = (int(filter_length / 2),), strides = int(filter_length / 2)),
+            Bidirectional(LSTM(recurrent_layer_count, dropout = 0.1, recurrent_dropout = 0.1, return_sequences = True)),
             Dropout(dropout_rate),
             Flatten(),
             Dense(dense_layer_count, activation = 'relu'),
@@ -73,4 +70,4 @@ def core_model(num_tfs, width, feature_count, filter_count, recurrent_layer_coun
     forward_output = get_output(forward_input, hidden_layers)     
     reverse_output = get_output(reverse_input, hidden_layers)
     output = Maximum()([forward_output, reverse_output ])
-    return Model(input = [ forward_input, reverse_input ], output = output)
+    return Model(inputs = [ forward_input, reverse_input ], outputs = output)

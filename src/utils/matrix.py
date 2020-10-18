@@ -16,7 +16,7 @@ class FeatureMatrix:
         indexes = sorted(indexes)
         with open(self.path, 'r') as f:
             j = json.load(f)
-        return numpy.array([ transform(j[i]) for i in indexes ])
+        return numpy.array([ numpy.array(transform(j[i])) for i in indexes ])
 
     def extractReverseFeaturesFromChromosomes(self, chromosomes):
-        return self.extractFeaturesFromChromosomes(chromosomes, lambda x: x[::-1])
+        return self.extractFeaturesFromChromosomes(chromosomes, lambda x: numpy.array(x[::-1]))
