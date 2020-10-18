@@ -5,6 +5,7 @@ from __future__ import print_function
 import sys
 import os
 import pickle
+import ujson
 
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.optimizers import Adam
@@ -15,6 +16,7 @@ from ..utils.zscore import ZScores
 from ..model.feature import forward_features, reverse_features
 from ..model.core import core_model
 from ..source.generator import generator
+from ..source.matrix import RandomAccessMatrixFile
 
 TRAINING_CHROMOSOME_DEFAULTS = { "chr1", "chr2", "chr4", "chr6", "chr7", "chr8", "chr9", "chr10", "chr13", "chr15", "chr17", "chr18", "chr20", "chr21", "chr22" }
 VALIDATION_CHROMOSOME_DEFAULTS = { "chr3", "chr5", "chr11", "chr12", "chr14", "chr16", "chr19" }
@@ -25,7 +27,7 @@ DEFAULT_DROPOUT_RATE = 0.5
 DEFAULT_LEARNING_RATE = 0.001
 DEFAULT_EPOCH_LIMIT = 100
 DEFAULT_PATIENCE = 20
-DEFAULT_BATCH_SIZE = 50000
+DEFAULT_BATCH_SIZE = 64
 
 def train_core(
     rDHSs,
@@ -47,9 +49,14 @@ def train_core(
 
     print("loading regions...", file = sys.stderr)
     rDHSs = RDHSSet(rDHSs)
+    with open(sequenceJson, 'r') as f:
+        f.readline()
+        flen = len(ujson.loads(f.readline()))
+    sequenceMatrixReader = RandomAccessMatrixFile(sequenceJson)
+    featureMatrixReaders = [ RandomAccessMatrixFile(featureJson) for featureJson in featureJsons ]
 
     print("compiling model...", file = sys.stderr)
-    model = core_model(1, len(forward_train[0]), len(featureJsons), filterCount, recurrentLayerCount, denseLayerCount, dropoutRate)
+    model = core_model(1, flen, len(featureJsons), filterCount, recurrentLayerCount, denseLayerCount, dropoutRate)
     model.compile(optimizer = Adam(lr = learningRate), loss = 'mean_squared_error', metrics = [ 'mean_squared_error' ])
     model.summary()
 
@@ -59,13 +66,12 @@ def train_core(
         verbose = 1, save_best_only = True
     )
     earlystopper = EarlyStopping(monitor = 'val_loss', patience = patience, verbose = 1)
-    train_samples_per_epoch = len(forward_train) / epochLimit
-    history = model.fit_generator(
-        generator(sequenceJson, featureJsons, signalZScores, rDHSs, trainingChromosomes, batchSize),
-        training_outputs,
+    train_samples_per_epoch = len(rDHSs.indexesForChromosomes(trainingChromosomes)) / epochLimit
+    history = model.fit(
+        generator(sequenceMatrixReader, featureMatrixReaders, signalZScores, rDHSs, trainingChromosomes, batchSize),
         epochs = epochLimit,
-        validation_data = generator(sequenceJson, featureJsons, signalZScores, rDHSs, validationChromosomes, batchSize),
-        validation_steps = len(forward_valid),
+        validation_data = generator(sequenceMatrixReader, featureMatrixReaders, signalZScores, rDHSs, validationChromosomes, batchSize),
+        validation_steps = len(rDHSs.indexesForChromosomes(validationChromosomes)),
         callbacks = [checkpointer, earlystopper]
     )
 
@@ -73,3 +79,6 @@ def train_core(
     model.save_weights(os.path.join(outputDir, 'final_model.hdf5'), overwrite = True)
     with open(os.path.join(outputDir, '/history.pkl'), 'wb') as f:
         pickle.dump(history.history, f)
+    for x in featureMatrixReaders:
+        x.close()
+    sequenceMatrixReader.close()
