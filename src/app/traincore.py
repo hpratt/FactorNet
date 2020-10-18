@@ -45,17 +45,8 @@ def train_core(
     batchSize = DEFAULT_BATCH_SIZE
 ):
 
-    print("building feature matrix...", file = sys.stderr)
+    print("loading regions...", file = sys.stderr)
     rDHSs = RDHSSet(rDHSs)
-    forward_train = forward_features(featureJsons, sequenceJson, rDHSs, TRAINING_CHROMOSOME_DEFAULTS)
-    reverse_train = reverse_features(featureJsons, sequenceJson, rDHSs, TRAINING_CHROMOSOME_DEFAULTS)
-    forward_valid = forward_features(featureJsons, sequenceJson, rDHSs, VALIDATION_CHROMOSOME_DEFAULTS)
-    reverse_valid = reverse_features(featureJsons, sequenceJson, rDHSs, VALIDATION_CHROMOSOME_DEFAULTS)
-
-    print("loading outputs...", file = sys.stderr)
-    z = ZScores(signalZScores, rDHSs)
-    training_outputs = z.tanhValuesForChromosome(trainingChromosomes)
-    validation_outputs = z.tanhValuesForChromosome(validationChromosomes)
 
     print("compiling model...", file = sys.stderr)
     model = core_model(1, len(forward_train[0]), len(featureJsons), filterCount, recurrentLayerCount, denseLayerCount, dropoutRate)
