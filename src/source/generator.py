@@ -23,7 +23,7 @@ def generator(sequenceMatrixReader, featureMatrixReaders, zscoreJson, rDHSs, chr
         )
         outputs = [ numpy.array([ math.tanh(scores[i] / 2) ]) for i in indexes ]
         pointer += batch_size
-        if pointer >= len(allIndexes):
+        if pointer + batch_size >= len(allIndexes):
             pointer = 0
             allIndexes = [ x for x in rDHSs.indexesForChromosomes(chromosomes) ]
         yield ( [ forward_features, reverse_features ], outputs )

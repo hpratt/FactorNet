@@ -66,12 +66,13 @@ def train_core(
         verbose = 1, save_best_only = True
     )
     earlystopper = EarlyStopping(monitor = 'val_loss', patience = patience, verbose = 1)
-    train_samples_per_epoch = len(rDHSs.indexesForChromosomes(trainingChromosomes)) / epochLimit
+    train_samples_per_epoch = len(rDHSs.indexesForChromosomes(trainingChromosomes)) / epochLimit / batchSize * 2
     history = model.fit(
         generator(sequenceMatrixReader, featureMatrixReaders, signalZScores, rDHSs, trainingChromosomes, batchSize),
         epochs = epochLimit,
         validation_data = generator(sequenceMatrixReader, featureMatrixReaders, signalZScores, rDHSs, validationChromosomes, batchSize),
-        validation_steps = len(rDHSs.indexesForChromosomes(validationChromosomes)),
+        validation_steps = len(rDHSs.indexesForChromosomes(validationChromosomes)) / epochLimit / batchSize * 2,
+        steps_per_epoch = train_samples_per_epoch,
         callbacks = [checkpointer, earlystopper]
     )
 
