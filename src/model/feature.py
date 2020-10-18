@@ -14,3 +14,8 @@ def reverse_features(featureJsons, sequenceJson, rDHSs, chromosomes):
     for featureJson in featureJsons:
         features[:,:,-1] = FeatureMatrix(featureJson, rDHSs).extractReverseFeaturesFromChromosomes(chromosomes)
     return features
+
+def feature_matrix(featureMatrices, sequenceMatrix):
+    for featureMatrix in featureMatrices:
+        sequenceMatrix[:,:,-1] = featureMatrix
+    return sequenceMatrix

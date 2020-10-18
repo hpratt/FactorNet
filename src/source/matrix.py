@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import ujson
+import numpy
 
 class RandomAccessMatrixFile:
 
@@ -16,9 +17,9 @@ class RandomAccessMatrixFile:
             self.offsets.append(self.offsets[-1] + x)
         return self
     
-    def read(self, index):
+    def read(self, index, transform = lambda x: x):
         self.file.seek(self.offsets[index])
-        return ujson.loads(self.file.readline())
+        return numpy.array(transform(ujson.loads(self.file.readline())))
     
     def __exit__(self, *args):
         self.file.close()

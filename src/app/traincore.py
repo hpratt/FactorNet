@@ -14,6 +14,7 @@ from ..utils.rDHS import RDHSSet
 from ..utils.zscore import ZScores
 from ..model.feature import forward_features, reverse_features
 from ..model.core import core_model
+from ..source.generator import generator
 
 TRAINING_CHROMOSOME_DEFAULTS = { "chr1", "chr2", "chr4", "chr6", "chr7", "chr8", "chr9", "chr10", "chr13", "chr15", "chr17", "chr18", "chr20", "chr21", "chr22" }
 VALIDATION_CHROMOSOME_DEFAULTS = { "chr3", "chr5", "chr11", "chr12", "chr14", "chr16", "chr19" }
@@ -24,6 +25,7 @@ DEFAULT_DROPOUT_RATE = 0.5
 DEFAULT_LEARNING_RATE = 0.001
 DEFAULT_EPOCH_LIMIT = 100
 DEFAULT_PATIENCE = 20
+DEFAULT_BATCH_SIZE = 50000
 
 def train_core(
     rDHSs,
@@ -39,7 +41,8 @@ def train_core(
     dropoutRate = DEFAULT_DROPOUT_RATE,
     learningRate = DEFAULT_LEARNING_RATE,
     epochLimit = DEFAULT_EPOCH_LIMIT,
-    patience = DEFAULT_PATIENCE
+    patience = DEFAULT_PATIENCE,
+    batchSize = DEFAULT_BATCH_SIZE
 ):
 
     print("building feature matrix...", file = sys.stderr)
@@ -66,11 +69,11 @@ def train_core(
     )
     earlystopper = EarlyStopping(monitor = 'val_loss', patience = patience, verbose = 1)
     train_samples_per_epoch = len(forward_train) / epochLimit
-    history = model.fit(
-        [ forward_train, reverse_train ],
+    history = model.fit_generator(
+        generator(sequenceJson, featureJsons, signalZScores, rDHSs, trainingChromosomes, batchSize),
         training_outputs,
         epochs = epochLimit,
-        validation_data = ([ forward_valid, reverse_valid ], validation_outputs),
+        validation_data = generator(sequenceJson, featureJsons, signalZScores, rDHSs, validationChromosomes, batchSize),
         validation_steps = len(forward_valid),
         callbacks = [checkpointer, earlystopper]
     )

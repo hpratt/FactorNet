@@ -10,6 +10,12 @@ class RDHSSet:
 
     def indexesForChromosome(self, chromosome):
         return { self.indexmap[x] for x in self.regions if x[0] == chromosome }
+    
+    def indexesForChromosomes(self, chromosomes):
+        r = set()
+        for x in chromosomes:
+            r = r.union(self.indexesForChromosome(x))
+        return r
 
     def accessionsForChromosome(self, chromosome):
         return { x[-1] for x in self.regions if x[0] == chromosome }
