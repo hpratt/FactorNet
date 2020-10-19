@@ -20,11 +20,11 @@ from ..source.matrix import RandomAccessMatrixFile
 
 TRAINING_CHROMOSOME_DEFAULTS = { "chr1", "chr2", "chr4", "chr6", "chr7", "chr8", "chr9", "chr10", "chr13", "chr15", "chr17", "chr18", "chr20", "chr21", "chr22" }
 VALIDATION_CHROMOSOME_DEFAULTS = { "chr3", "chr5", "chr11", "chr12", "chr14", "chr16", "chr19" }
-DEFAULT_FILTER_COUNT = 48
+DEFAULT_FILTER_COUNT = 8
 DEFAULT_RECURRENT_LAYER_COUNT = 1
 DEFAULT_DENSE_LAYER_COUNT = 1
-DEFAULT_DROPOUT_RATE = 0.5
-DEFAULT_LEARNING_RATE = 0.001
+DEFAULT_DROPOUT_RATE = 0.1
+DEFAULT_LEARNING_RATE = 0.1
 DEFAULT_EPOCH_LIMIT = 100
 DEFAULT_PATIENCE = 20
 DEFAULT_BATCH_SIZE = 64
@@ -52,13 +52,13 @@ def train_core(
     with open(sequenceJson, 'r') as f:
         f.readline()
         flen = len(ujson.loads(f.readline()))
-    sequenceMatrixReader = RandomAccessMatrixFile(sequenceJson, width = 75)
+    sequenceMatrixReader = RandomAccessMatrixFile(sequenceJson, width = 150)
     featureMatrixReaders = [ RandomAccessMatrixFile(featureJson, True) for featureJson in featureJsons ]
     clens = sum([ len(featureMatrixReader.read(0)) for featureMatrixReader in featureMatrixReaders ])
 
     print("compiling model...", file = sys.stderr)
-    model = core_model(1, 151, clens, filterCount, recurrentLayerCount, denseLayerCount, dropoutRate)
-    model.compile(optimizer = Adam(lr = learningRate), loss = 'mean_squared_error', metrics = [ 'mean_squared_error' ])
+    model = core_model(1, 301, clens, filterCount, recurrentLayerCount, denseLayerCount, dropoutRate)
+    model.compile(optimizer = Adam(lr = learningRate), loss = 'binary_crossentropy', metrics = [ 'binary_crossentropy' ])
     model.summary()
 
     print("running at most {epochs} epochs".format(epochs = epochLimit), file = sys.stderr)
