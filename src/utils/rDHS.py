@@ -8,6 +8,9 @@ class RDHSSet:
         self.indexmap = { x: i for i, x in enumerate(self.regions) }
         self.accessionIndexMap = { x[-1]: i for i, x in enumerate(self.regions) }
 
+    def __len__(self):
+        return len(self.regions)
+
     def indexesForChromosome(self, chromosome):
         return { self.indexmap[x] for x in self.regions if x[0] == chromosome }
     

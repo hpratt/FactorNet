@@ -6,8 +6,9 @@ import ujson
 
 from ..model.feature import feature_matrix
 
-def generator(sequenceMatrixReader, featureMatrixReaders, zscoreJson, rDHSs, chromosomes, batch_size):
+def generator(sequenceMatrixReader, featureMatrixReaders, zscoreJson, rDHSs, chromosomes, batch_size, sortedI = False):
     indexes = [ x for x in rDHSs.indexesForChromosomes(chromosomes) ]
+    if sortedI: indexes = sorted(indexes)
     with open(zscoreJson, 'r') as f:
         scores = ujson.load(f)
     pointer = 0
@@ -25,6 +26,7 @@ def generator(sequenceMatrixReader, featureMatrixReaders, zscoreJson, rDHSs, chr
             if pointer + batch_size >= len(indexes):
                 pointer = 0
                 indexes = [ x for x in rDHSs.indexesForChromosomes(chromosomes) ]
+                if sortedI: indexes = sorted(indexes)
         forward_features = feature_matrix(
             [ numpy.array([ forward_features[j][i] for j in range(len(forward_features)) ]) for i in range(len(forward_features[0]) - 1) ],
             numpy.array([ forward_features[i][-1] for i in range(len(forward_features)) ])
