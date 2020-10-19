@@ -1,5 +1,7 @@
 #!/usr/bin/env python2
 
+import numpy
+
 from ..utils.sequence import SequenceMatrix
 from ..utils.matrix import FeatureMatrix
 
@@ -17,5 +19,8 @@ def reverse_features(featureJsons, sequenceJson, rDHSs, chromosomes):
 
 def feature_matrix(featureMatrices, sequenceMatrix):
     for featureMatrix in featureMatrices:
-        sequenceMatrix[:,:,-1] = featureMatrix
+        sequenceMatrix = numpy.array([
+            numpy.array([ numpy.append(sequenceMatrix[k][j], [ featureMatrix[k][i][j] for i in range(len(featureMatrix[k])) ]) for j in range(len(featureMatrix[k][0])) ])
+            for k in range(len(featureMatrix))
+        ])
     return sequenceMatrix

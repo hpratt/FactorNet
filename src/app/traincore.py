@@ -52,11 +52,12 @@ def train_core(
     with open(sequenceJson, 'r') as f:
         f.readline()
         flen = len(ujson.loads(f.readline()))
-    sequenceMatrixReader = RandomAccessMatrixFile(sequenceJson)
-    featureMatrixReaders = [ RandomAccessMatrixFile(featureJson) for featureJson in featureJsons ]
+    sequenceMatrixReader = RandomAccessMatrixFile(sequenceJson, width = 75)
+    featureMatrixReaders = [ RandomAccessMatrixFile(featureJson, True) for featureJson in featureJsons ]
+    clens = sum([ len(featureMatrixReader.read(0)) for featureMatrixReader in featureMatrixReaders ])
 
     print("compiling model...", file = sys.stderr)
-    model = core_model(1, flen, len(featureJsons), filterCount, recurrentLayerCount, denseLayerCount, dropoutRate)
+    model = core_model(1, 151, clens, filterCount, recurrentLayerCount, denseLayerCount, dropoutRate)
     model.compile(optimizer = Adam(lr = learningRate), loss = 'mean_squared_error', metrics = [ 'mean_squared_error' ])
     model.summary()
 
@@ -69,7 +70,7 @@ def train_core(
     train_samples_per_epoch = len(rDHSs.indexesForChromosomes(trainingChromosomes)) / epochLimit / batchSize * 2
     history = model.fit(
         generator(sequenceMatrixReader, featureMatrixReaders, signalZScores, rDHSs, trainingChromosomes, batchSize),
-        epochs = epochLimit,
+        epochs = 2, # epochLimit,
         validation_data = generator(sequenceMatrixReader, featureMatrixReaders, signalZScores, rDHSs, validationChromosomes, batchSize),
         validation_steps = len(rDHSs.indexesForChromosomes(validationChromosomes)) / epochLimit / batchSize * 2,
         steps_per_epoch = train_samples_per_epoch,
@@ -78,8 +79,10 @@ def train_core(
 
     print("saving model...", file = sys.stderr)
     model.save_weights(os.path.join(outputDir, 'final_model.hdf5'), overwrite = True)
-    with open(os.path.join(outputDir, '/history.pkl'), 'wb') as f:
+    with open(os.path.join(outputDir, 'history.pkl'), 'wb') as f:
         pickle.dump(history.history, f)
+    with open(os.path.join(outputDir, 'model.json'), 'w') as f:
+        f.write(model.to_json())
     for x in featureMatrixReaders:
         x.close()
     sequenceMatrixReader.close()
